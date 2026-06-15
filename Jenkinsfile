@@ -4,11 +4,12 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
+       stage('Clone') {
             steps {
-                git 'https://github.com/ShreeStyle/2-tire-web-app-Jenkins-Docker.git'
+        git branch: 'main',
+            url: 'https://github.com/ShreeStyle/2-tire-web-app-Jenkins-Docker.git'
             }
-        }
+}
 
         stage('Build Image') {
             steps {
