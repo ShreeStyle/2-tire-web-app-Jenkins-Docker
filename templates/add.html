@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Add Expense</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="form-card">
+
+    <h1>➕ Add Expense</h1>
+
+    <form method="POST">
+
+        <input
+        type="text"
+        name="title"
+        placeholder="Expense Name"
+        required>
+
+        <input
+        type="number"
+        name="amount"
+        placeholder="Amount"
+        required>
+
+        <select name="category">
+
+            <option>Food</option>
+            <option>Travel</option>
+            <option>Shopping</option>
+            <option>Entertainment</option>
+            <option>Other</option>
+
+        </select>
+
+        <input
+        type="date"
+        name="expense_date"
+        required>
+
+        <button type="submit">
+            Save Expense
+        </button>
+
+    </form>
+
+    <br>
+
+    <a href="/">⬅ Back</a>
+
+</div>
+
+</body>
+</html>
