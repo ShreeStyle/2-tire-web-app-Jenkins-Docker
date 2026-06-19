@@ -71,6 +71,7 @@ pipeline {
                 echo "✓ Building Docker image..."
                 sh '''
                     docker build \
+                      --platform linux/amd64 \
                       --tag ${DOCKER_IMAGE}:latest \
                       --tag ${DOCKER_IMAGE}:${DOCKER_TAG} \
                       --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
