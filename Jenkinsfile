@@ -9,12 +9,13 @@ pipeline {
         // Docker
         DOCKER_IMAGE = "flask-app"
         DOCKER_TAG = "${BUILD_NUMBER}"
-        DOCKER_REGISTRY = "your-registry.azurecr.io"
+        DOCKER_REGISTRY = "chikalemon.azurecr.io"
         CONTAINER_NAME = "flask-container"
         
         // Azure
         AZURE_SUBSCRIPTION = "your-subscription-id"
-        RESOURCE_GROUP = "your-resource-group"
+        RESOURCE_GROUP = "timetravel_Chika"
+        ACR_CREDENTIALS = credentials('azure-registry-credentials')
         
         // Paths
         PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -158,12 +159,59 @@ pipeline {
             steps {
                 echo "✓ Pushing image to Azure Container Registry..."
                 sh '''
+                    # Tag images for Azure
                     docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
                     docker tag ${DOCKER_IMAGE}:latest ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
                     
-                    echo "ℹ Configure Azure login in Jenkins credentials first"
-                    # docker login -u USERNAME -p PASSWORD ${DOCKER_REGISTRY}
-                    # docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                    # Login to Azure Container Registry
+                    echo $ACR_CREDENTIALS_PSW | docker login -u $ACR_CREDENTIALS_USR --password-stdin ${DOCKER_REGISTRY}
+                    
+                    # Push images
+                    docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest
+                    
+                    echo "✓ Images pushed to ${DOCKER_REGISTRY}"
+                    
+                    # Logout
+                    docker logout ${DOCKER_REGISTRY}
+                '''
+            }
+        }
+
+        stage('☁️ Deploy to Azure') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo "✓ Deploying to Azure Container Instances..."
+                sh '''
+                    # Check if container already exists
+                    if az container show --name flask-app-prod --resource-group ${RESOURCE_GROUP} 2>/dev/null; then
+                        echo "✓ Updating existing container..."
+                        az container delete --name flask-app-prod --resource-group ${RESOURCE_GROUP} --yes || true
+                    fi
+                    
+                    # Deploy new container
+                    az container create \
+                      --resource-group ${RESOURCE_GROUP} \
+                      --name flask-app-prod \
+                      --image ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:latest \
+                      --registry-login-server ${DOCKER_REGISTRY} \
+                      --registry-username $ACR_CREDENTIALS_USR \
+                      --registry-password $ACR_CREDENTIALS_PSW \
+                      --ports 5000 \
+                      --ip-address public \
+                      --cpu 1 \
+                      --memory 1 \
+                      --environment-variables ENVIRONMENT=production \
+                      --restart-policy OnFailure \
+                      --log-analytics-workspace /subscriptions/${AZURE_SUBSCRIPTION}/resourcegroups/${RESOURCE_GROUP}/providers/microsoft.operationalinsights/workspaces/log-workspace || true
+                    
+                    echo "✓ Container deployed!"
+                    
+                    # Get the public IP
+                    PUBLIC_IP=$(az container show --name flask-app-prod --resource-group ${RESOURCE_GROUP} --query ipAddress.ip --output tsv)
+                    echo "✓ App URL: http://$PUBLIC_IP:5000"
                 '''
             }
         }
