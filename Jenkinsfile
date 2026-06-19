@@ -188,6 +188,7 @@ pipeline {
                       --registry-login-server ${DOCKER_REGISTRY} \
                       --registry-username $ACR_CREDENTIALS_USR \
                       --registry-password $ACR_CREDENTIALS_PSW \
+                      --os-type Linux \
                       --ports 5000 \
                       --ip-address public \
                       --cpu 1 \
