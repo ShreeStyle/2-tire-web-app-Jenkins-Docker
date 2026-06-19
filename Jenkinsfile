@@ -110,9 +110,6 @@ pipeline {
         }
 
         stage('🚀 Deploy to Dev') {
-            when {
-                branch 'main'
-            }
             steps {
                 echo "✓ Deploying to development environment..."
                 sh '''
@@ -132,9 +129,6 @@ pipeline {
         }
 
         stage('✅ Smoke Tests') {
-            when {
-                branch 'main'
-            }
             steps {
                 echo "✓ Running smoke tests..."
                 sh '''
@@ -153,9 +147,6 @@ pipeline {
         }
 
         stage('📤 Push to Registry') {
-            when {
-                branch 'main'
-            }
             steps {
                 echo "✓ Pushing image to Azure Container Registry..."
                 sh '''
@@ -179,9 +170,6 @@ pipeline {
         }
 
         stage('☁️ Deploy to Azure') {
-            when {
-                branch 'main'
-            }
             steps {
                 echo "✓ Deploying to Azure Container Instances..."
                 sh '''
@@ -189,6 +177,7 @@ pipeline {
                     if az container show --name flask-app-prod --resource-group ${RESOURCE_GROUP} 2>/dev/null; then
                         echo "✓ Updating existing container..."
                         az container delete --name flask-app-prod --resource-group ${RESOURCE_GROUP} --yes || true
+                        sleep 5
                     fi
                     
                     # Deploy new container
@@ -203,14 +192,13 @@ pipeline {
                       --ip-address public \
                       --cpu 1 \
                       --memory 1 \
-                      --environment-variables ENVIRONMENT=production \
-                      --restart-policy OnFailure \
-                      --log-analytics-workspace /subscriptions/${AZURE_SUBSCRIPTION}/resourcegroups/${RESOURCE_GROUP}/providers/microsoft.operationalinsights/workspaces/log-workspace || true
+                      --restart-policy OnFailure
                     
-                    echo "✓ Container deployed!"
+                    echo "✓ Container deployment initiated!"
+                    sleep 10
                     
                     # Get the public IP
-                    PUBLIC_IP=$(az container show --name flask-app-prod --resource-group ${RESOURCE_GROUP} --query ipAddress.ip --output tsv)
+                    PUBLIC_IP=$(az container show --name flask-app-prod --resource-group ${RESOURCE_GROUP} --query ipAddress.ip --output tsv 2>/dev/null || echo "IP not yet assigned")
                     echo "✓ App URL: http://$PUBLIC_IP:5000"
                 '''
             }
