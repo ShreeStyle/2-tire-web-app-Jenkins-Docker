@@ -14,7 +14,7 @@ pipeline {
         
         // Azure
         AZURE_SUBSCRIPTION = "your-subscription-id"
-        RESOURCE_GROUP = "timetravel_Chika"
+        RESOURCE_GROUP = "timetravek_Chika"
         ACR_CREDENTIALS = credentials('azure-registry-credentials')
         
         // Paths
@@ -221,24 +221,20 @@ pipeline {
     post {
         always {
             echo "╔═══════════════════════════════════════╗"
-            echo "║ hi jan!! D              ║"
+            echo "║ Build Summary                         ║"
             echo "╠═══════════════════════════════════════╣"
             echo "║ Build: ${BUILD_NUMBER}                 ║"
             echo "║ Status: ${currentBuild.result}        ║"
             echo "║ Duration: ${currentBuild.durationString} ║"
             echo "╚═══════════════════════════════════════╝"
-            
-            cleanWs()
         }
 
         success {
             echo "✅ Pipeline succeeded!"
-            // Add Slack/Teams notification here
         }
 
         failure {
             echo "❌ Pipeline failed!"
-            // Add Slack/Teams notification here
         }
     }
 }
